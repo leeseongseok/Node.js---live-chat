@@ -5,40 +5,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node.js[Chat]</title>
-    <!-- <link rel="stylesheet" href="/css/style.css"> -->
-    <style>
-        #main{
-            margin: auto;
-            margin-top: 100px;
-            background-color: lightblue;
-            text-align: center;
-            width: 200px;
-        }
-    </style>
+    <!-- jQuery 연동 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"  crossorigin="anonymous"></script>
+    <!-- index.js 첫번째 줄 error로 직접 스크립트 추가 -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/index.js"></script>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
-<script>
-    var time = 3600;
-    var min = "";
-    var sec = "";
 
-    var x = setInterval(function(){
-        min = parseInt(time/60);
-        sec = time%60;
-
-        document.getElementById("demo").innerHTML = min + "분" +  sec + "초";
-        time--;
-
-        if(time<0){
-            clearInterval(x);
-            document.getElementById("demo").innerHTML = "시간초과";
-        }
-    })
-
-</script>
 <body>
     <div id="main">
-        Hi
+        <input type="text" id="test">
+        <button onclick="send()">전송</button>
     </div>
-    <div id="demo"></div>
 </body>
 </html>

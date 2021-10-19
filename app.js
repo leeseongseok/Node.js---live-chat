@@ -4,45 +4,64 @@ const express = require('express');
 const socket = require('socket.io');
 // Node.js 기본 내장 모듈 불러오기
 const http = require('http');
-const { fstat } = require('fs');
+// // Node.js 기본 내장 모듈 불러오기
+const fs = require('fs');
+const { disconnect } = require('process');
 // express 객체 생성
 const app = express();
 // express http 서버 생성
 const server = http.createServer(app)
 // 생성된 서버를 socket.io에 바인딩
 const io = socket(server)
-// Get 방식으로 / 경로에 접속하는 것 허용
-// 이것을 해주지 않으면 localhost:8080으로 접속했을 때 " Cannot GET / " Error 발생
+
+// const { disconnect } = require('process');
+
+// 정적파일을 제공하기 위해 미들웨어를 사용
+app.use('/css', express.static('./static/css'))
+app.use('/js', express.static('./static/js'))
+// Get 방식으로 / 경로에 접속하면 실행 됨
 app.get('/', function (request, response) {
-    console.log('유저가 / 으로 접속하였습니다.')
-    response.send('Hello, Express Server!')
+    fs.readFile('./static/index.html', function (err, data) {
+        if(err){
+            response.send('Error')
+        } else {
+            response.writeHead(200, { 'Content-Type': 'text/html' })
+            response.write(data)
+            response.end()
+        }
+    })
 })
+
+io.sockets.on('connection', function (socket) {
+    // 새로운 유저가 접속했을 경우 다른 소켓에게도 알려줌
+    socket.on('newUser', function (name) {
+        console.log(name + ' 님이 접속하였습니다.')
+        // 소켓에 이름 저장
+        socket.name = name
+        // 모든 소켓에게 전송
+        io.sockets.emit('update', {type: 'connect', name: 'SERVER', message: name + '님이 접속하였습니다.'})
+    })
+    // 전송한 메시지 받기
+    socket.on('message', function (data) {
+        // 받은 데이터에 누가 보냈는지 이름 추가
+        data.name = socket.name
+
+        console.log(data)
+        // 보낸 사람을 제외한 나머지 유저에게 메시지 전송
+        io.sockets.emit('update', data);
+        // socket.broadcast.emit('update', data);
+    })
+    // 접속 종료
+    socket.on('disconnect', function () {
+        console.log(socket.name + '님이 나가셨습니다.')
+        // 나가는 사람을 제외한 나머지 유저에게 메시지 전송
+        socket.broadcast.emit('update', { type: 'disconnect', name: 'SERVER', message: socket.name + '님이 나가셨습니다.'});
+    })
+})
+
+
 // 서버를 8080 포트로 listen
 // cmd -> netstat -anb로 확인가능
 server.listen(8080, function () {
     console.log('서버 실행 중 ');
 })
-
-// // Node.js 기본 내장 모듈 불러오기
-// const fs = require('fs')
-// // express 객체 생성
-// const app = express()
-// // express http 서버 생성
-// const server = http.createServer(app)
-// // 생성된 서버를 socket.io에 바인딩
-// const io = socket(server)
-// // 정적파일을 제공하기 위해 미들웨어를 사용
-// app.use('/css', express.static('./static/css'))
-// app.use('/js', express.static('./static/js'))
-// // Get 방식으로 / 경로에 접속하면 실행 됨
-// app.get('/', function (request, response) {
-//     fstat.readFile('./static/index.html', function (err, data) {
-//         if(err){
-//             response.send('Error')
-//         } else {
-//             response.writeHead(200, { 'Content-Type': 'text/html' })
-//             response.write(data)
-//             response.end()
-//         }
-//     })
-// })
